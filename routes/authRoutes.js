@@ -1,27 +1,2 @@
-const express = require('express');
-const { body } = require('express-validator');
-const router = express.Router();
-const authController = require('../controllers/authController');
-const validate = require('../middleware/validate');
-
-router.post(
-  '/signup',
-  [
-    body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  ],
-  validate,
-  authController.signup
-);
-
-router.post(
-  '/login',
-  [
-    body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password').notEmpty().withMessage('Password is required'),
-  ],
-  validate,
-  authController.login
-);
-
-module.exports = router;
+"const express = require('express');\nconst { body } = require('express-validator');\nconst router = express.Router();\nconst authController = require('../controllers/authController');\nconst validate = require('../middleware/validate');\n\n/**\n * @swagger\n * /auth/signup:\n *   post:\n *     summary: Register a new user\n *     tags: [Auth]\n *     requestBody:\n *       required: true\n *       content:\n *         application/json:\n *           schema:\n *             type: object\n *             required:\n *               - email\n *               - password\n *             properties:\n *               email:\n *                 type: string\n *                 format: email\n *                 example: user@example.com\n *               password:\n *                 type: string\n *                 minLength: 6\n *                 example: password123\n *     responses:\n *       201:\n *         description: User created successfully\n *       400:\n *         description: Validation error or Email already in use\n */\nrouter.post(\n  '/signup',\n  [\n    body('email').isEmail().withMessage('Please provide a valid email'),\n    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),\n  ],\n  validate,\n  authController.signup\n);\n\n/**\n * @swagger\n * /auth/login:\n *   post:\n *     summary: Login a user\n *     tags: [Auth]\n *     requestBody:\n *       required: true\n *       content:\n *         application/json:\n *           schema:\n *             type: object\n *             required:\n *               - email\n *               - password\n *             properties:\n *               email:\n *                 type: string\n *                 format: email\n *                 example: user@example.com\n *               password:\n *                 type: string\n *                 example: password123\n *     responses:\n *       200:\n *         description: Successful login\n *         content:\n *           application/json:\n *             schem
+<truncated 505 bytes>
