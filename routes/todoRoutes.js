@@ -1,25 +1,2 @@
-const express = require('express');
-const { body } = require('express-validator');
-const router = express.Router();
-const todoController = require('../controllers/todoController');
-const validate = require('../middleware/validate');
-const auth = require('../middleware/auth');
-
-router.use(auth);
-
-router.post(
-  '/',
-  [
-    body('title').notEmpty().withMessage('Title is required'),
-  ],
-  validate,
-  todoController.createTodo
-);
-
-router.get('/', todoController.getTodos);
-
-router.put('/:id', todoController.updateTodo);
-
-router.delete('/:id', todoController.deleteTodo);
-
-module.exports = router;
+"const express = require('express');\nconst { body } = require('express-validator');\nconst router = express.Router();\nconst todoController = require('../controllers/todoController');\nconst validate = require('../middleware/validate');\nconst auth = require('../middleware/auth');\n\nrouter.use(auth);\n\n/**\n * @swagger\n * components:\n *   schemas:\n *     Todo:\n *       type: object\n *       properties:\n *         id:\n *           type: integer\n *           description: The auto-generated id of the todo\n *         title:\n *           type: string\n *           description: The title of your todo\n *         completed:\n *           type: boolean\n *           description: Whether you have done the task\n *         user_id:\n *           type: integer\n *           description: The user who owns the todo\n *         createdAt:\n *           type: string\n *           format: date-time\n *         updatedAt:\n *           type: string\n *           format: date-time\n *       example:\n *         id: 1\n *         title: Buy groceries\n *         completed: false\n *         user_id: 1\n *         createdAt: 2026-06-21T00:00:00.000Z\n *         updatedAt: 2026-06-21T00:00:00.000Z\n */\n\n/**\n * @swagger\n * /todos:\n *   post:\n *     summary: Create a new todo\n *     tags: [Todos]\n *     security:\n *       - bearerAuth: []\n *     requestBody:\n *       required: true\n *       content:\n *         application/json:\n *           schema:\n *             type: object\n *             required:\n *               - title\n *             properties:\n *               title:\n *                 type: string\n *                 example: Buy groceries\n *               completed:\n *                 type: boolean\n *                 example: false\n *     responses:\n *       201:\n *         description: The created todo\n *         content:\n *           application/json:\n *             schema:\n *               $ref: '#/components/schemas/Todo'\n *       400:\n *         description: Validation error\n
+<truncated 2319 bytes>
