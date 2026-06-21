@@ -1,2 +1,167 @@
-"const express = require('express');\nconst { body } = require('express-validator');\nconst router = express.Router();\nconst todoController = require('../controllers/todoController');\nconst validate = require('../middleware/validate');\nconst auth = require('../middleware/auth');\n\nrouter.use(auth);\n\n/**\n * @swagger\n * components:\n *   schemas:\n *     Todo:\n *       type: object\n *       properties:\n *         id:\n *           type: integer\n *           description: The auto-generated id of the todo\n *         title:\n *           type: string\n *           description: The title of your todo\n *         completed:\n *           type: boolean\n *           description: Whether you have done the task\n *         user_id:\n *           type: integer\n *           description: The user who owns the todo\n *         createdAt:\n *           type: string\n *           format: date-time\n *         updatedAt:\n *           type: string\n *           format: date-time\n *       example:\n *         id: 1\n *         title: Buy groceries\n *         completed: false\n *         user_id: 1\n *         createdAt: 2026-06-21T00:00:00.000Z\n *         updatedAt: 2026-06-21T00:00:00.000Z\n */\n\n/**\n * @swagger\n * /todos:\n *   post:\n *     summary: Create a new todo\n *     tags: [Todos]\n *     security:\n *       - bearerAuth: []\n *     requestBody:\n *       required: true\n *       content:\n *         application/json:\n *           schema:\n *             type: object\n *             required:\n *               - title\n *             properties:\n *               title:\n *                 type: string\n *                 example: Buy groceries\n *               completed:\n *                 type: boolean\n *                 example: false\n *     responses:\n *       201:\n *         description: The created todo\n *         content:\n *           application/json:\n *             schema:\n *               $ref: '#/components/schemas/Todo'\n *       400:\n *         description: Validation error\n
-<truncated 2319 bytes>
+const express = require('express');
+const { body } = require('express-validator');
+const router = express.Router();
+const todoController = require('../controllers/todoController');
+const validate = require('../middleware/validate');
+const auth = require('../middleware/auth');
+
+router.use(auth);
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Todo:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the todo
+ *         title:
+ *           type: string
+ *           description: The title of your todo
+ *         completed:
+ *           type: boolean
+ *           description: Whether you have done the task
+ *         user_id:
+ *           type: integer
+ *           description: The user who owns the todo
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *       example:
+ *         id: 1
+ *         title: Buy groceries
+ *         completed: false
+ *         user_id: 1
+ *         createdAt: 2026-06-21T00:00:00.000Z
+ *         updatedAt: 2026-06-21T00:00:00.000Z
+ */
+
+/**
+ * @swagger
+ * /todos:
+ *   post:
+ *     summary: Create a new todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Buy groceries
+ *               completed:
+ *                 type: boolean
+ *                 example: false
+ *     responses:
+ *       201:
+ *         description: The created todo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Todo'
+ *       400:
+ *         description: Validation error
+ */
+router.post(
+  '/',
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+  ],
+  validate,
+  todoController.createTodo
+);
+
+/**
+ * @swagger
+ * /todos:
+ *   get:
+ *     summary: Returns the list of all the todos
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The list of the todos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Todo'
+ */
+router.get('/', todoController.getTodos);
+
+/**
+ * @swagger
+ * /todos/{id}:
+ *   put:
+ *     summary: Update a todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The todo id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               completed:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: The updated todo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Todo'
+ *       404:
+ *         description: Todo not found or unauthorized
+ */
+router.put('/:id', todoController.updateTodo);
+
+/**
+ * @swagger
+ * /todos/{id}:
+ *   delete:
+ *     summary: Delete a todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The todo id
+ *     responses:
+ *       204:
+ *         description: Todo deleted successfully
+ *       404:
+ *         description: Todo not found or unauthorized
+ */
+router.delete('/:id', todoController.deleteTodo);
+
+module.exports = router;
