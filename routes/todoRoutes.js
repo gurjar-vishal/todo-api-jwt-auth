@@ -73,6 +73,8 @@ router.use(auth);
  *               $ref: '#/components/schemas/Todo'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  */
 router.post(
   '/',
@@ -87,19 +89,21 @@ router.post(
  * @swagger
  * /todos:
  *   get:
- *     summary: Returns the list of all the todos
+ *     summary: Get all todos for the logged-in user
  *     tags: [Todos]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: The list of the todos
+ *         description: A list of todos
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Todo'
+ *       401:
+ *         description: Unauthorized
  */
 router.get('/', todoController.getTodos);
 
@@ -107,7 +111,7 @@ router.get('/', todoController.getTodos);
  * @swagger
  * /todos/{id}:
  *   put:
- *     summary: Update a todo
+ *     summary: Update a todo by id
  *     tags: [Todos]
  *     security:
  *       - bearerAuth: []
@@ -136,8 +140,10 @@ router.get('/', todoController.getTodos);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Todo'
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Todo not found or unauthorized
+ *         description: Todo not found
  */
 router.put('/:id', todoController.updateTodo);
 
@@ -145,7 +151,7 @@ router.put('/:id', todoController.updateTodo);
  * @swagger
  * /todos/{id}:
  *   delete:
- *     summary: Delete a todo
+ *     summary: Delete a todo by id
  *     tags: [Todos]
  *     security:
  *       - bearerAuth: []
@@ -157,10 +163,12 @@ router.put('/:id', todoController.updateTodo);
  *         required: true
  *         description: The todo id
  *     responses:
- *       204:
+ *       200:
  *         description: Todo deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Todo not found or unauthorized
+ *         description: Todo not found
  */
 router.delete('/:id', todoController.deleteTodo);
 

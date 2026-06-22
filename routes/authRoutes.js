@@ -77,9 +77,10 @@ router.post(
  *               properties:
  *                 token:
  *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: Validation error
  *       401:
- *         description: Invalid credentials
+ *         description: Invalid email or password
  */
 router.post(
   '/login',
