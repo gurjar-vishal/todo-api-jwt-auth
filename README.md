@@ -1,96 +1,211 @@
 # Todo API with JWT Auth
 
-A Todo REST API built with Node.js, Express, and PostgreSQL. Users sign up, log in, and get a JWT, which is required for every todo operation. Each user can only see and modify their own todos.
+A Todo REST API built with Node.js, Express, and PostgreSQL, deployed on AWS ECS Fargate with a full CI/CD pipeline.
 
-This was built as part of a DevOps practical task. AWS deployment, Terraform, and CI/CD are separate phases of that task and are tracked separately — this README covers the application as it stands right now: built, containerized, and runnable locally.
+**Live URL:** http://todo-api-alb-430959870.us-east-1.elb.amazonaws.com  
+**Swagger Docs:** http://todo-api-alb-430959870.us-east-1.elb.amazonaws.com/api-docs  
+**Health Check:** http://todo-api-alb-430959870.us-east-1.elb.amazonaws.com/health  
+**GitHub:** https://github.com/gurjar-vishal/todo-api-jwt-auth
 
-## Tech stack
+---
 
-- Node.js + Express
-- PostgreSQL with Sequelize ORM
-- JWT for authentication, bcrypt for password hashing
-- Swagger (OpenAPI) for API documentation
-- Docker + Docker Compose for local environment
+## Tech Stack
 
-## Project structure
+- **Runtime:** Node.js + Express
+- **Database:** PostgreSQL (AWS RDS) with Sequelize ORM
+- **Auth:** JWT (jsonwebtoken) + bcrypt password hashing
+- **Docs:** Swagger UI (OpenAPI 3.0)
+- **Container:** Docker + Docker Compose
+- **Cloud:** AWS ECS Fargate, ECR, RDS, ALB, CloudWatch
+- **IaC:** Terraform
+- **CI/CD:** GitHub Actions
+
+---
+
+## Project Structure
 
 ```
 .
-├── config/           # database connection and sequelize config
-├── controllers/       # request handlers for auth and todos
-├── middleware/         # JWT verification, validation, error handler
-├── migrations/         # sequelize migrations (users, todos tables)
-├── models/             # Sequelize models and associations
-├── routes/             # route definitions + swagger doc comments
+├── .github/
+│   └── workflows/
+│       └── deploy.yml        # GitHub Actions CI/CD pipeline
+├── config/                   # Database and Sequelize config
+├── controllers/              # Auth and Todo request handlers
+├── middleware/               # JWT auth, validation, error handler
+├── migrations/               # Sequelize migrations (users, todos)
+├── models/                   # Sequelize models and associations
+├── routes/                   # Route definitions with Swagger comments
+├── terraform/                # IaC — ECS, ALB, Security Groups, ECR
 ├── Dockerfile
 ├── docker-compose.yml
 └── server.js
 ```
 
-## Running it locally
+---
 
-You need Docker installed. That's the only hard requirement — Postgres runs inside a container, so you don't need it installed on your machine.
+## Running Locally
 
-1. Clone the repo and `cd` into it.
-2. Run:
-   ```
-   docker-compose up --build
-   ```
-   This starts Postgres, runs the migrations automatically, and starts the API on port 3000.
-3. The API is now available at `http://localhost:3000`.
+Only requirement is Docker Desktop.
 
-If you'd rather run it without Docker (e.g. you already have Postgres running locally):
-
-1. Install dependencies: `npm install`
-2. Create a `.env` file in the project root (see Environment variables below)
-3. Run migrations: `npx sequelize-cli db:migrate`
-4. Start the server: `npm run dev` (uses nodemon) or `npm start`
-
-## Environment variables
-
-| Variable     | Description                                  | Example                                              |
-|--------------|-----------------------------------------------|-------------------------------------------------------|
-| `PORT`       | Port the server listens on                    | `3000`                                                 |
-| `DB_URL`     | Postgres connection string                    | `postgres://postgres:password@localhost:5432/todo_db` |
-| `JWT_SECRET` | Secret used to sign JWTs — use a long random value | `your-own-random-secret-string`                   |
-
-When running via `docker-compose up`, these are already set inside `docker-compose.yml` for local use, so you don't need to create a `.env` file separately.
-
-## API endpoints
-
-| Method | Endpoint        | Auth required | Description                          |
-|--------|-----------------|----------------|----------------------------------------|
-| GET    | `/health`       | No             | Returns `{ "status": "ok" }`            |
-| POST   | `/auth/signup`  | No             | Register with `{ email, password }`     |
-| POST   | `/auth/login`   | No             | Log in, returns a JWT                   |
-| POST   | `/todos`        | Yes            | Create a todo: `{ title, completed }`   |
-| GET    | `/todos`        | Yes            | List the logged-in user's todos         |
-| PUT    | `/todos/:id`    | Yes            | Update a todo you own                   |
-| DELETE | `/todos/:id`    | Yes            | Delete a todo you own                   |
-
-For protected endpoints, send the JWT from login in the request header:
-```
-Authorization: Bearer <your-token>
+```bash
+git clone https://github.com/gurjar-vishal/todo-api-jwt-auth.git
+cd todo-api-jwt-auth
+docker-compose up --build
 ```
 
-## API documentation (Swagger)
+API available at `http://localhost:3000`. Postgres starts automatically inside a container, migrations run on boot.
 
-Once the server is running, full interactive API docs are available at:
+**Without Docker** (if you have Postgres installed locally):
+
+```bash
+npm install
+# create .env file (see Environment Variables below)
+npx sequelize-cli db:migrate
+npm run dev
 ```
-http://localhost:3000/api-docs
+
+---
+
+## Environment Variables
+
+| Variable     | Description                        |
+|--------------|------------------------------------|
+| `PORT`       | Server port (default: 3000)        |
+| `DB_URL`     | PostgreSQL connection string        |
+| `JWT_SECRET` | Secret for signing JWTs            |
+| `BASE_URL`   | Public URL (used by Swagger UI)    |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint       | Auth | Description                        |
+|--------|----------------|------|------------------------------------|
+| GET    | `/health`      | No   | Returns `{ "status": "ok" }`       |
+| POST   | `/auth/signup` | No   | Register `{ email, password }`     |
+| POST   | `/auth/login`  | No   | Login, returns JWT                 |
+| POST   | `/todos`       | Yes  | Create todo `{ title, completed }` |
+| GET    | `/todos`       | Yes  | List logged-in user's todos        |
+| PUT    | `/todos/:id`   | Yes  | Update a todo                      |
+| DELETE | `/todos/:id`   | Yes  | Delete a todo                      |
+
+Protected endpoints require:
 ```
-You can try every endpoint directly from that page. For protected endpoints, click "Authorize" at the top of the page and paste in the token you got from `/auth/login`.
+Authorization: Bearer <token>
+```
 
-## Testing with Postman
+---
 
-A Postman collection is included (`Todo-API-JWT-Auth.postman_collection.json`). Import it into Postman, run **Auth → Login** first — it automatically saves the returned token so every request under the **Todos** folder works without manually copying it. The collection's `baseUrl` variable is set to `http://localhost:3000` by default; change it if you're testing against a different environment.
+## AWS Deployment (ECS Fargate)
 
-## Notes
+### Architecture
 
-- Passwords are hashed with bcrypt before being stored — never saved or logged in plaintext.
-- A user can only read, update, or delete their own todos. Every todo query is scoped by the logged-in user's id, enforced at the database query level, not just in the UI.
-- Login returns the same error for both "email doesn't exist" and "wrong password," so the API doesn't reveal which one was incorrect.
+```
+Internet → ALB (port 80) → ECS Fargate Task (port 3000) → RDS PostgreSQL
+```
 
-## Status
+**Security groups:**
+- `alb-sg` — allows HTTP 80 from internet only
+- `ecs-sg` — allows port 3000 from `alb-sg` only
+- `rds-sg` — allows port 5432 from `ecs-sg` only
 
-The application and Docker setup above are complete and tested locally. AWS deployment (ECS Fargate), Infrastructure as Code (Terraform), and the CI/CD pipeline are the next phase of this task and will be documented here once done.
+Nothing is directly internet-exposed except the ALB.
+
+### Manual Deployment Steps
+
+1. Push Docker image to ECR:
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t todo-api .
+docker tag todo-api:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/todo-api:latest
+docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/todo-api:latest
+```
+
+2. Create RDS PostgreSQL instance (Free tier, `db.t3.micro`)
+3. Run migrations against RDS:
+```bash
+export DB_URL="postgres://postgres:<password>@<rds-endpoint>:5432/todo_db"
+npx sequelize-cli db:migrate
+```
+4. Create ECS Cluster (Fargate), Task Definition, and Service
+5. Create ALB → Target Group → Listener (port 80 → port 3000)
+6. Set health check path to `/health`
+
+### Terraform (IaC)
+
+The `terraform/` folder provisions the same infrastructure from code.
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# fill in your actual DB_URL and JWT_SECRET
+terraform init
+terraform plan
+terraform apply
+```
+
+Resources provisioned: ECR repository, ECS cluster, task definition, service, ALB, target group, listener, security groups, CloudWatch log group.
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions workflow at `.github/workflows/deploy.yml` triggers on every push to `main`.
+
+**Pipeline stages:**
+1. Checkout code
+2. Configure AWS credentials (from GitHub Secrets)
+3. Login to Amazon ECR
+4. Build Docker image and push to ECR (tagged with git SHA)
+5. Update ECS task definition with new image
+6. Deploy to ECS and wait for stability
+
+**Required GitHub Secrets:**
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+---
+
+## Logging & Monitoring
+
+### Application Logs (CloudWatch)
+
+All container logs stream to CloudWatch automatically via the `awslogs` driver configured in the ECS task definition.
+
+**Log group:** `/ecs/todo-api`
+
+To view logs:
+- AWS Console → CloudWatch → Log groups → `/ecs/todo-api`
+- Each ECS task creates a log stream under `ecs/todo-api/<task-id>`
+
+### CPU & Memory Monitoring
+
+ECS publishes CPU and memory utilization metrics to CloudWatch automatically for every running task.
+
+To view:
+- AWS Console → CloudWatch → Metrics → ECS → ClusterName, ServiceName
+- Metrics available: `CPUUtilization`, `MemoryUtilization`
+- Set alarms: CloudWatch → Alarms → Create alarm → pick the ECS metric → set threshold (e.g. alert if CPU > 80% for 5 minutes)
+
+### Debugging Application Issues
+
+If a request fails or the app crashes, this is the order I follow:
+
+1. **Check ALB target health** — EC2 → Target Groups → `todo-api-tg` → Targets tab. If the target shows unhealthy, the container isn't responding to `/health` — the issue is in the app, not networking.
+
+2. **Check CloudWatch logs** — CloudWatch → Log groups → `/ecs/todo-api`. Filter by the task's log stream to see exact error messages and stack traces from the running container.
+
+3. **Check ECS task stopped reason** — if the task keeps stopping, go to ECS → Clusters → `todo-cluster` → Tasks tab → click a stopped task → scroll to "Stopped reason." Common causes: wrong environment variables, database connection failure, container port mismatch.
+
+4. **Check RDS connectivity** — if logs show a DB connection error, verify the `ecs-sg` inbound rule on `rds-sg` is set correctly and that the `DB_URL` environment variable in the task definition points to the correct RDS endpoint.
+
+---
+
+## Security Notes
+
+- Passwords are hashed with bcrypt before storage — never logged or stored in plaintext
+- JWT tokens expire after 1 hour
+- Login returns the same error message whether the email doesn't exist or the password is wrong — prevents account enumeration
+- Every todo query is scoped by `user_id` at the database level — one user cannot access another user's data
+- RDS is in a private subnet with no public access — only reachable from ECS tasks via security group rules
+- Secrets (DB credentials, JWT secret) are passed as environment variables, not baked into the Docker image
